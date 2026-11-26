@@ -14,6 +14,10 @@ use windows::core::{Interface, Result, s};
 
 use crate::host::transition;
 
+#[cfg(feature = "diagnostics")]
+#[path = "dirty_page_bench.rs"]
+mod bench;
+
 const SOURCE: &str = concat!(
     "#define D3D12_TEST_ROOT_SIGNATURE\n",
     include_str!("dirty_pages.hlsl")
@@ -248,6 +252,12 @@ fn exercise(device: ID3D12Device, adapter: &DXGI_ADAPTER_DESC1, label: &str) -> 
         },
     ] {
         verify(&fixture, case)?;
+    }
+    #[cfg(feature = "diagnostics")]
+    if label == "hardware"
+        && std::env::var_os("VICTORY_DIRTY_PAGE_BENCH").is_some_and(|v| v == "1")
+    {
+        bench::measure(&fixture)?;
     }
     Ok(())
 }
